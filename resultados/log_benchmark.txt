@@ -1,0 +1,18 @@
+{'nodos': 400, 'aristas': 1542, 'estrategia': 'BFS (menos giros)', 'ms_media': 0.08, 'ms_p95': 0.115, 'expandidos_media': 265.2, 'brecha_optimalidad_pct': 41.36}
+{'nodos': 400, 'aristas': 1542, 'estrategia': 'Dijkstra', 'ms_media': 0.231, 'ms_p95': 0.331, 'expandidos_media': 265.5, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 400, 'aristas': 1542, 'estrategia': 'A*', 'ms_media': 0.121, 'ms_p95': 0.261, 'expandidos_media': 100.1, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 400, 'aristas': 1542, 'estrategia': 'Dijkstra bidireccional', 'ms_media': 0.191, 'ms_p95': 0.314, 'expandidos_media': 149.1, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 1600, 'aristas': 6368, 'estrategia': 'BFS (menos giros)', 'ms_media': 0.316, 'ms_p95': 0.486, 'expandidos_media': 997.4, 'brecha_optimalidad_pct': 55.71}
+{'nodos': 1600, 'aristas': 6368, 'estrategia': 'Dijkstra', 'ms_media': 0.916, 'ms_p95': 1.42, 'expandidos_media': 994.2, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 1600, 'aristas': 6368, 'estrategia': 'A*', 'ms_media': 0.451, 'ms_p95': 1.061, 'expandidos_media': 347.3, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 1600, 'aristas': 6368, 'estrategia': 'Dijkstra bidireccional', 'ms_media': 0.777, 'ms_p95': 1.518, 'expandidos_media': 593.4, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 6400, 'aristas': 25740, 'estrategia': 'BFS (menos giros)', 'ms_media': 1.311, 'ms_p95': 2.142, 'expandidos_media': 3883.3, 'brecha_optimalidad_pct': 63.96}
+{'nodos': 6400, 'aristas': 25740, 'estrategia': 'Dijkstra', 'ms_media': 3.829, 'ms_p95': 6.021, 'expandidos_media': 3883.5, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 6400, 'aristas': 25740, 'estrategia': 'A*', 'ms_media': 1.39, 'ms_p95': 3.762, 'expandidos_media': 1090.7, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 6400, 'aristas': 25740, 'estrategia': 'Dijkstra bidireccional', 'ms_media': 3.286, 'ms_p95': 6.446, 'expandidos_media': 2423.2, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 14400, 'aristas': 58214, 'estrategia': 'BFS (menos giros)', 'ms_media': 3.631, 'ms_p95': 5.598, 'expandidos_media': 8785.0, 'brecha_optimalidad_pct': 73.21}
+{'nodos': 14400, 'aristas': 58214, 'estrategia': 'Dijkstra', 'ms_media': 10.245, 'ms_p95': 15.472, 'expandidos_media': 8803.6, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 14400, 'aristas': 58214, 'estrategia': 'A*', 'ms_media': 3.82, 'ms_p95': 9.743, 'expandidos_media': 2738.5, 'brecha_optimalidad_pct': 0.0}
+{'nodos': 14400, 'aristas': 58214, 'estrategia': 'Dijkstra bidireccional', 'ms_media': 9.234, 'ms_p95': 17.055, 'expandidos_media': 6126.2, 'brecha_optimalidad_pct': 0.0}
+{'sin_cache': {'segundos': 4.695, 'solicitudes_por_s': 638.9, 'tasa_aciertos': None, 'invalidaciones': None}, 'con_cache': {'segundos': 0.964, 'solicitudes_por_s': 3110.9, 'tasa_aciertos': 0.793, 'invalidaciones': 347, 'entradas_validadas': 274, 'entradas_no_optimas': 0}, 'mejora_x': 4.87}
+{'sesiones': 100, 'ms_recalculo_media': 0.77, 'ms_recalculo_p95': 2.11, 'ahorro_s_medio': 33.1, 'ahorro_s_max': 56.3}

@@ -1,0 +1,17 @@
+== 1. Comparación de estrategias ==
+BFS (menos giros)        tiempo de viaje  11.35 min | nodos expandidos  1582 | cálculo   0.78 ms
+Dijkstra                 tiempo de viaje   7.69 min | nodos expandidos  1586 | cálculo   1.98 ms
+A*                       tiempo de viaje   7.69 min | nodos expandidos  1448 | cálculo   2.02 ms
+
+== 2. Sesión con incidente ==
+Incidente en la vía 337-338 (congestión x10). Ruta restante antes: 49 nodos
+Recálculos automáticos: 1 (1.24 ms). Nueva ruta restante: 51 nodos
+
+== 3. Primeras instrucciones (Iterator) ==
+1. Siga 201 m y gire a la derecha
+2. Siga 2398 m y gire a la derecha
+3. Siga 1590 m y gire a la izquierda
+4. Siga 504 m y gire a la derecha
+5. Siga 306 m y llegará a su destino
+
+Figuras guardadas en resultados/

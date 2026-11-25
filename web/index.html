@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Mareas Urbanas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;color:#1f2430;background:#f3f5f7;display:flex;height:100vh}
+#lado{width:340px;padding:16px;overflow:auto;background:#fff;border-right:1px solid #dde1e6}
+h1{font-size:18px;margin:0 0 2px}small{color:#6b7380}
+label{display:block;margin:12px 0 4px;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7380}
+select,button{font:inherit;padding:7px 10px;border:1px solid #c5ccd4;border-radius:6px;background:#fff;cursor:pointer}
+button:hover{background:#eef2f5}button.on{background:#00798c;color:#fff;border-color:#00798c}
+.fila{display:flex;gap:6px;flex-wrap:wrap}.fila>*{flex:1}
+#pasos{margin:6px 0;padding-left:18px;max-height:140px;overflow:auto;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:3px 4px;text-align:left;border-bottom:1px solid #eef0f3}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:6px}.kpi div{background:#f3f5f7;border-radius:6px;padding:6px 8px}
+.kpi b{display:block;font-size:17px}#msg{margin-top:10px;min-height:34px;font-size:13px;color:#00798c}
+#mapa{flex:1;display:flex;align-items:center;justify-content:center;padding:12px}canvas{background:#fff;border-radius:8px;box-shadow:0 1px 4px #0002;max-width:100%;max-height:100%;cursor:crosshair}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+</style></head><body>
+<div id="lado">
+<h1>Mareas Urbanas</h1><small>Motor de navegación · Strategy, Observer, Command, Composite, Iterator</small>
+<label>1. Elige origen y destino</label>
+<div class="fila"><button id="bOD" class="on">Clic: origen → destino</button><button id="bInc">Clic: incidente</button></div>
+<small id="ayuda">Haz clic en el mapa para el origen (cuadrado) y luego el destino (triángulo).</small>
+<label>2. Algoritmo (Strategy)</label>
+<select id="est" style="width:100%"><option value="astar">A*</option><option value="dijkstra">Dijkstra</option><option value="bidireccional">Dijkstra bidireccional</option><option value="bfs">BFS (menos giros)</option></select>
+<div class="fila" style="margin-top:6px"><button id="bComp">Comparar los 4</button></div>
+<label>3. Viaje e incidentes</label>
+<div class="fila"><button id="bViaje">▶ Iniciar viaje</button><button id="bDes">↶ Deshacer</button><button id="bRei">Reiniciar</button></div>
+<div class="fila" style="margin-top:6px;align-items:center"><span>Incidente ×</span><select id="fac"><option>3</option><option selected>10</option><option>30</option></select></div>
+<div id="msg"></div>
+<label>Ruta actual</label>
+<div class="kpi"><div><b id="kMin">–</b>minutos</div><div><b id="kExp">–</b>nodos expandidos</div><div><b id="kMs">–</b>ms de cálculo</div><div><b id="kRec">0</b>recálculos</div></div>
+<label>Caché de rutas (Observer)</label>
+<div class="kpi"><div><b id="cAc">0</b>aciertos</div><div><b id="cFa">0</b>fallos</div><div><b id="cIn">0</b>invalidaciones</div><div><b id="cTa">0</b>rutas guardadas</div></div>
+<div id="tabla"></div>
+<label>Instrucciones (Iterator)</label><ol id="pasos"></ol>
+</div>
+<div id="mapa"><canvas id="cv" width="860" height="860"></canvas></div>
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),cx=cv.getContext('2d');
+let M=null,S={},origen=null,destino=null,modo='od',comparacion=null,timer=null,recorrido=[];
+const COL={astar:'#00798c',dijkstra:'#30323d',bidireccional:'#edae49',bfs:'#d1495b'};
+async function api(p,d){const r=await fetch(p,d===undefined?{}:{method:'POST',body:JSON.stringify(d)});return r.json()}
+function ext(){let xs=M.coords.map(c=>c[0]),ys=M.coords.map(c=>c[1]);return{x0:Math.min(...xs),x1:Math.max(...xs),y0:Math.min(...ys),y1:Math.max(...ys)}}
+let E;
+function P(i){const[x,y]=M.coords[i],pad=30,w=cv.width-2*pad;return[pad+(x-E.x0)/(E.x1-E.x0)*w,cv.height-pad-(y-E.y0)/(E.y1-E.y0)*w]}
+function trazar(cam,color,w,dash){if(!cam||cam.length<2)return;cx.beginPath();cx.strokeStyle=color;cx.lineWidth=w;cx.setLineDash(dash||[]);cam.forEach((n,i)=>{const[x,y]=P(n);i?cx.lineTo(x,y):cx.moveTo(x,y)});cx.stroke();cx.setLineDash([])}
+function dibujar(){
+ cx.clearRect(0,0,cv.width,cv.height);
+ for(const[a,b,v]of M.aristas){const[x1,y1]=P(a),[x2,y2]=P(b);cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.strokeStyle=v>=50?'#9aa5b1':'#d5dae0';cx.lineWidth=v>=50?1.6:.7;cx.stroke()}
+ for(const[a,b,f]of(S.congestion||[])){const[x1,y1]=P(a),[x2,y2]=P(b);cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.strokeStyle='#d1495b';cx.lineWidth=5;cx.stroke();cx.fillStyle='#d1495b';cx.font='bold 12px system-ui';cx.fillText('×'+f,(x1+x2)/2+6,(y1+y2)/2-6)}
+ if(comparacion){comparacion.forEach((r,i)=>trazar(r.camino,COL[r.clave],i==2?5:3,i==3?[8,6]:null))}
+ else{trazar(recorrido,'#b9c4cf',4);trazar(S.camino,'#00798c',4)}
+ if(origen!=null){const[x,y]=P(origen);cx.fillStyle='#1f2430';cx.fillRect(x-7,y-7,14,14)}
+ if(destino!=null){const[x,y]=P(destino);cx.fillStyle='#1f2430';cx.beginPath();cx.moveTo(x,y-9);cx.lineTo(x+9,y+7);cx.lineTo(x-9,y+7);cx.fill()}
+ if(S.actual!=null&&S.camino){const[x,y]=P(S.actual);cx.fillStyle='#edae49';cx.strokeStyle='#1f2430';cx.lineWidth=2;cx.beginPath();cx.arc(x,y,8,0,7);cx.fill();cx.stroke()}
+}
+function panel(){
+ $('cAc').textContent=S.cache.aciertos;$('cFa').textContent=S.cache.fallos;$('cIn').textContent=S.cache.invalidaciones;$('cTa').textContent=S.cache.tamano;
+ if(S.minutos!=null){$('kMin').textContent=S.minutos;$('kRec').textContent=S.recalculos}
+ $('pasos').innerHTML=(S.instrucciones||[]).map(t=>'<li>'+t+'</li>').join('');
+}
+function msg(t){$('msg').textContent=t}
+function nodoCerca(mx,my){let b=0,bd=1e18;M.coords.forEach((_,i)=>{const[x,y]=P(i),d=(x-mx)**2+(y-my)**2;if(d<bd){bd=d;b=i}});return b}
+function aristaCerca(mx,my){let b=null,bd=1e18;for(const[a,c]of M.aristas){const[x1,y1]=P(a),[x2,y2]=P(c);const dx=x2-x1,dy=y2-y1;let t=Math.max(0,Math.min(1,((mx-x1)*dx+(my-y1)*dy)/(dx*dx+dy*dy)));const d=(x1+t*dx-mx)**2+(y1+t*dy-my)**2;if(d<bd){bd=d;b=[a,c]}}return b}
+cv.addEventListener('click',async ev=>{
+ const r=cv.getBoundingClientRect(),mx=(ev.clientX-r.left)*cv.width/r.width,my=(ev.clientY-r.top)*cv.height/r.height;
+ if(modo=='inc'){const e=aristaCerca(mx,my);S=await api('/api/incidente',{a:e[0],b:e[1],factor:+$('fac').value});
+   const rec=S.recalculos;msg('Incidente en la vía '+e[0]+'–'+e[1]+'. Recálculos de la sesión: '+rec+'. Caché invalidada: '+S.cache.invalidaciones+'.');panel();dibujar();return}
+ const n=nodoCerca(mx,my);comparacion=null;
+ if(origen==null||(origen!=null&&destino!=null)){origen=n;destino=null;S.camino=null;recorrido=[];detener();$('tabla').innerHTML='';msg('Origen elegido. Ahora elige el destino.');dibujar();return}
+ destino=n;await calcular()
+});
+async function calcular(){
+ comparacion=null;recorrido=[];detener();
+ const r=await api('/api/ruta',{o:origen,d:destino,estrategia:$('est').value});S=r;
+ $('kExp').textContent=r.expandidos;$('kMs').textContent=r.ms;
+ msg(r.desde_cache?'Ruta servida desde la caché (sin recalcular).':'Ruta calculada con '+r.estrategia+'.');
+ panel();dibujar()
+}
+$('est').onchange=()=>{if(origen!=null&&destino!=null)calcular()};
+$('bComp').onclick=async()=>{if(origen==null||destino==null){msg('Primero elige origen y destino.');return}
+ const r=await api('/api/comparar',{o:origen,d:destino});comparacion=r.resultados;
+ $('tabla').innerHTML='<label>Comparación</label><table><tr><th>Estrategia</th><th>min</th><th>nodos</th><th>ms</th></tr>'+r.resultados.map(x=>`<tr><td><span class="sw" style="background:${COL[x.clave]}"></span>${x.estrategia}</td><td>${x.minutos}</td><td>${x.expandidos}</td><td>${x.ms}</td></tr>`).join('')+'</table>';
+ msg('Comparación sin tráfico entre las 4 estrategias.');dibujar()};
+$('bOD').onclick=()=>{modo='od';$('bOD').classList.add('on');$('bInc').classList.remove('on');$('ayuda').textContent='Clic en el mapa: origen (cuadrado) y luego destino (triángulo).'};
+$('bInc').onclick=()=>{modo='inc';$('bInc').classList.add('on');$('bOD').classList.remove('on');$('ayuda').textContent='Clic cerca de una vía para ponerle un incidente (rojo).'};
+function detener(){if(timer){clearInterval(timer);timer=null;$('bViaje').textContent='▶ Iniciar viaje'}}
+$('bViaje').onclick=()=>{
+ if(timer){detener();return}
+ if(!S.camino){msg('Primero calcula una ruta.');return}
+ $('bViaje').textContent='⏸ Pausar';comparacion=null;
+ timer=setInterval(async()=>{
+   if(S.llegó){detener();msg('¡Llegó al destino! Recálculos durante el viaje: '+S.recalculos+'.');return}
+   const previo=S.recalculos,ant=S.actual;S=await api('/api/avanzar',{pasos:1});recorrido.push(ant);
+   if(S.recalculos>previo)msg('Incidente en el tramo restante: ruta recalculada automáticamente.');
+   panel();dibujar()},220)};
+$('bDes').onclick=async()=>{S=await api('/api/deshacer',{});msg('Último incidente revertido (Command).');panel();dibujar()};
+$('bRei').onclick=async()=>{detener();S=await api('/api/reiniciar',{});origen=destino=null;comparacion=null;recorrido=[];$('tabla').innerHTML='';
+ ['kMin','kExp','kMs'].forEach(k=>$(k).textContent='–');$('kRec').textContent=0;msg('Mapa y caché reiniciados.');panel();dibujar()};
+(async()=>{M=await api('/api/mapa');E=ext();S=await api('/api/estado');panel();dibujar()})();
+</script></body></html>
